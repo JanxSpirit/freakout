@@ -22,7 +22,8 @@ trait MongoSupport {
   val mongoPort = akkaConfig.getInt("mongodb.port", 27017)
 
   //val mFreakouts = MongoConnection(mongoHost, mongoPort)(mongoDb)(freakoutsColl)
-  val mFreakouts = MongoConnection(mongoHost, mongoPort)(mongoDb)(freakoutsColl)
+  //val mFreakouts = MongoConnection(mongoHost, mongoPort)(mongoDb)(freakoutsColl)
+  val mFreakouts = MongoConnection(System.getenv("MONGOHQ_URL"))("freakout")("freakouts")
 
 }
 
