@@ -1,5 +1,7 @@
 import AssemblyKeys._
 
+import com.typesafe.startscript.StartScriptPlugin
+
 name := "freakout"
 
 version := "1.0"
@@ -9,6 +11,8 @@ scalaVersion := "2.9.1"
 mainClass := Some("JettyLauncher")
 
 seq(webSettings :_*)
+
+seq(StartScriptPlugin.startScriptForClassesSettings: _*)
 
 port in container.Configuration := 8080
 

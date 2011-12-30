@@ -1,2 +1,6 @@
 *target*
 .idea*
+target
+project/boot
+project/target
+project/plugins/target
