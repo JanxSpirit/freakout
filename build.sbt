@@ -23,7 +23,11 @@ scalacOptions := Seq("-deprecation", "-encoding", "utf8")
 libraryDependencies ++= Seq(
   "com.mongodb.casbah" %% "casbah" % "2.1.5-1",
   "se.scalablesolutions.akka" % "akka-actor" % "1.2" % "compile",
-  "cc.spray" % "spray-server" % "0.9.0-SNAPSHOT" % "compile",
+  "cc.spray" % "spray-base" % "0.8.0" % "compile" withSources(),
+  "cc.spray" % "spray-server" % "0.8.0" % "compile" withSources(),
+  "cc.spray.json" %% "spray-json" % "1.0.1" % "compile",
+  "net.liftweb" %% "lift-json" % "2.4-RC1",
+  "net.liftweb" %% "lift-json-ext" % "2.4-RC1",
   "org.specs2" %% "specs2" % "1.6.1"  % "test",
   "org.eclipse.jetty" % "jetty-webapp" % "8.0.3.v20111011" % "container, compile",
   "org.eclipse.jetty" % "jetty-server" % "8.0.3.v20111011" % "container, compile",
