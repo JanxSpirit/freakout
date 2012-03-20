@@ -2,7 +2,7 @@
 <html lang="en"><head>
 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
     <meta charset="utf-8">
-    <title>Bootstrap, from Twitter</title>
+    <title>Freakout - don't freak out today...</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="">
     <meta name="author" content="">
@@ -29,7 +29,6 @@
   </head>
 
   <body>
-
     <div class="navbar navbar-fixed-top">
       <div class="navbar-inner">
         <div class="container">
@@ -38,7 +37,7 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </a>
-          <a class="brand" href="#">Project name</a>
+          <a class="brand" href="#">Freakout</a>
           <div class="nav-collapse">
             <ul class="nav">
               <li class="active"><a href="#">Home</a></li>
@@ -51,9 +50,23 @@
     </div>
 
     <div class="container">
+    <div class="hero-unit">
+    <h1>Freakout</h1>
+    <p>Don't freak out today...</p>
+    <p>
+    <a class="btn btn-primary btn-large">
+    Add User
+    </a>
+    </p>
+    </div>
 
-      <h1>Bootstrap starter template</h1>
-      <p>Use this document as a way to quick start any new project.<br> All you get is this message and a barebones HTML document.</p>
+      <div class="row">
+	<div class="span2 offset3">
+	  <div class="freakout_users">
+	 
+	  </div>
+	</div>
+      </div>
 
     </div> <!-- /container -->
 
@@ -74,6 +87,69 @@
     <script src="index_files/bootstrap-carousel.js"></script>
     <script src="index_files/bootstrap-typeahead.js"></script>
 
-  
+      <script>
+ $(document).ready(function(){
+   $.getJSON('users',function(data) {
+     $.each(data.users, function(i, user) {
+       $('.freakout_users').append(userDropDown(user))
+     });
+   });
+ });
+
+ function userDropDown(user) {
+
+   var caret = $('<span></span>')
+            .addClass('caret');
+
+   var freakoutLi = $('<li></li>')
+            .addClass('btn btn-primary btn-large')
+            .text('Freakout!')
+            .click(function() {
+              $.ajax('freakouts/'+user._id, {
+                type: 'POST',
+                statusCode: {
+                  201: function(data) {
+                    alert(user.fullname + ' freaked out')
+                    alert('#fo_count_'+data._id)
+                    $('#fo_count_'+data._id).text(data.fc_total)
+                  }
+                }
+              })
+            });
+
+   var dodgeLi = $('<li></li>')
+            .addClass('btn btn-primary btn-large')
+            .text('Dodged a Freakout');
+
+   var mainButton = $('<button></button>')
+            .addClass('btn btn-primary btn-large')
+            .text(user.fullname);
+
+   var dropButton = $('<button></button>')
+            .addClass('btn dropdown-toggle btn-primary btn-large')
+            .attr('data-toggle','dropdown')
+            .append(caret);
+
+   var menu = $('<ul></ul>')
+            .addClass('dropdown-menu')
+            .append(freakoutLi)
+            .append(dodgeLi);
+
+   var freakoutCount = $('<span></span>')
+            .addClass('badge badge-error badge-large')
+            .text(user.fc_total)
+            .attr('id','fo_count_'+user._id);
+
+   var btnGroup = $('<div></di>')
+            .addClass('btn-group')
+            .append(mainButton)
+            .append(dropButton)
+            .append(menu)
+            .append(freakoutCount);
+
+  return btnGroup;
+
+ }
+    </script>
 
 </body></html>
