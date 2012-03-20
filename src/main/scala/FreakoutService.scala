@@ -1,16 +1,11 @@
 import cc.spray._
-import directives.Remaining
+import cc.spray.directives._
 import http.StatusCodes
 import http.MediaTypes._
 import com.mongodb.casbah.Imports._
-import cc.spray.json._
-import net.liftweb.json.{Formats, DefaultFormats}
 
-case class Msg(content: String)
-
-object MsgJsonProtocol extends DefaultJsonProtocol {
-  implicit val msgFormat = jsonFormat(Msg, "content")
-}
+import net.liftweb.json._
+import net.liftweb.json.Serialization._
 
 trait MongoSupport {
   val akkaConfig = akka.config.Config.config
@@ -27,18 +22,13 @@ trait MongoSupport {
 }
 
 trait FreakoutService extends Directives
-with LiftJsonSupport
-with MongoSupport {
+  with MongoSupport {
 
   implicit val formats = DefaultFormats
 
   val cooloffInMillis = akkaConfig.getLong("freakout.cooloffInMillis", 120000L)
 
   println(cooloffInMillis)
-
-  import MsgJsonProtocol.msgFormat
-
-  //  import MsgJsonProtocol.listFormat
 
   val service = {
     path("users") {
@@ -149,7 +139,7 @@ with MongoSupport {
               respondWithMediaType(`application/json`) {
                 ctx =>
                   ctx.complete {
-                    mFreakouts.flatMap(dbo => {
+                    write(mFreakouts.flatMap(dbo => {
                       for (
                         _id <- dbo.getAs[String]("_id");
                         fullname <- dbo.getAs[String]("fullname");
@@ -163,7 +153,7 @@ with MongoSupport {
                           d <- fodbo.getAs[Long]("d")
                         ) yield Freakout(d)
                       }).toList)*/
-                    })
+                    }))
                   }
               }
           } ~

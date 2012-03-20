@@ -23,15 +23,12 @@ scalacOptions := Seq("-deprecation", "-encoding", "utf8")
 libraryDependencies ++= Seq(
   "com.mongodb.casbah" %% "casbah" % "2.1.5-1",
   "se.scalablesolutions.akka" % "akka-actor" % "1.2" % "compile",
-  "cc.spray" % "spray-base" % "0.8.0" % "compile" withSources(),
-  "cc.spray" % "spray-server" % "0.8.0" % "compile" withSources(),
-  "cc.spray.json" %% "spray-json" % "1.0.1" % "compile",
-  "net.liftweb" %% "lift-json" % "2.4-RC1",
-  "net.liftweb" %% "lift-json-ext" % "2.4-RC1",
+  "cc.spray" % "spray-server" % "0.9.0-RC1" % "compile",
+  "cc.spray.can" % "spray-can" % "0.9.2-SNAPSHOT" % "compile",
+  "net.liftweb" %% "lift-json" % "2.4",
+  "net.liftweb" %% "lift-json-ext" % "2.4",
   "org.specs2" %% "specs2" % "1.6.1"  % "test",
-  "org.eclipse.jetty" % "jetty-webapp" % "8.0.3.v20111011" % "container, compile",
-  "org.eclipse.jetty" % "jetty-server" % "8.0.3.v20111011" % "container, compile",
-  "org.eclipse.jetty" % "jetty-util" % "8.0.3.v20111011" % "container, compile",
+  "org.eclipse.jetty" % "jetty-webapp" % "8.1.0.v20120127" % "container",
   "se.scalablesolutions.akka" % "akka-slf4j" % "1.2",
   "org.slf4j" % "slf4j-api" % "1.6.1",
   "ch.qos.logback" % "logback-classic" % "0.9.29"
@@ -40,6 +37,7 @@ libraryDependencies ++= Seq(
 resolvers ++= Seq(
   "Akka Repository" at "http://akka.io/repository/",
   "Web plugin repo" at "http://siasia.github.com/maven2",
-  ScalaToolsSnapshots
+  ScalaToolsSnapshots,
+  "Spray Repo" at "http://repo.spray.cc/"
 )
 
