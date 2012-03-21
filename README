@@ -1,0 +1,13 @@
+Basic HowTo Run Freakout
+
+1 - In base directory, run 'sbt11'
+2 - At sbt prompt, run 'container:start' to start service
+3 - In a shell, run 'mongod --dbpath /var/mongodata'
+4 - Front end code is in <freakout_dir>/src/main/webapp/index.html
+5 - If you change frontend code, go back to the sbt prompt and run 'container:reload'
+
+Odds and ends
+To open a file in Emacs C-x C-f
+
+To save in Emacs C-x C-s
+
