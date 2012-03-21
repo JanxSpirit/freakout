@@ -44,9 +44,9 @@ class FreakoutServlet extends ScalatraServlet with Akka2Support {
   put("/users/:name", acceptJson(request)) {
     contentType = jsonType
     val userDbo = JSON.parse(request.body).asInstanceOf[DBObject]
-    userDbo.put("fo_count",0L: java.lang.Long)
-    val res = usersColl.update(MongoDBObject("_id" -> params("name")), userDbo , true, false)
-    if(res.getLastError().ok) {
+    userDbo.put("fo_count", 0L: java.lang.Long)
+    val res = usersColl.update(MongoDBObject("_id" -> params("name")), userDbo, true, false)
+    if (res.getLastError().ok) {
       halt(201, "user %s created" format params("name"))
     } else {
       halt(400, "could not create user %s" format params("name"))
@@ -68,18 +68,30 @@ class FreakoutServlet extends ScalatraServlet with Akka2Support {
     val now = System.currentTimeMillis
     val idq = ("last" $lt (now - cooloffInMillis)) ++
       ("_id" -> params("name"))
-    val freak = $push("freakouts" -> MongoDBObject("d" -> now)) ++
-      $inc("fc_total" -> 1) ++
-      $set("last" -> now)
-    freakoutsColl.findAndModify(idq, freak) match {
-      case Some(x) => {
-        val upd = freakoutsColl.findOne(MongoDBObject("_id" -> params("name"))) match {
-	  case Some(user) => halt(201, user.toString)
-	  case _ => halt(400, "Who is that and why are they freaking out???")
-	}
+    usersColl.findAndModify(idq,
+      ($inc("fo_count" -> 1L) ++
+        $set("last" -> now))) match {
+        case Some(user) => logFreakout(params("name"), now)
+        case _ => {
+          usersColl.findOne(MongoDBObject("_id" -> params("name"))) match {
+            case Some(user) => {
+              user.getAs[Long]("fo_count") match {
+                case Some(0L) => {
+		  //user has never freaked out so this is legit
+                  usersColl.findAndModify(MongoDBObject("_id" -> params("name")),
+					  ($inc("fo_count" -> 1L) ++
+					   $set("last" -> now)))
+                  logFreakout(params("name"), now)
+		} 
+		case _ => halt(400, "%s has freaked out in the past %s millis"
+		   .format(params("name"), cooloffInMillis))
+              }
+            }
+            case _ => halt(400, "Who is %s and why are they freaking out???"
+              .format(params("name")))
+          }
+        }
       }
-      case _ => halt(400, "freakout logged within last %s millis" format cooloffInMillis)
-    }
   }
 
   def acceptJson(request: HttpServletRequest) = {
@@ -95,6 +107,11 @@ class FreakoutServlet extends ScalatraServlet with Akka2Support {
       }
     })
   }
+
+  def logFreakout(name: String, now: Long) =
+    freakoutsColl.insert(MongoDBObject(
+      "u" -> name,
+      "d" -> now))
 
   override def destroy = {
     ec.shutdown
