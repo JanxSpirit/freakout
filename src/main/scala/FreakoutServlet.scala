@@ -19,6 +19,7 @@ class FreakoutServlet extends ScalatraServlet with Akka2Support {
     ExecutionContext.fromExecutorService(Executors.newCachedThreadPool())
 
   //setup Casbah connection
+  val usersColl = MongoConnection("localhost", 27017)("freakout")("users")
   val freakoutsColl = MongoConnection("localhost", 27017)("freakout")("freakouts")
 
   get("/test") {
@@ -34,7 +35,7 @@ class FreakoutServlet extends ScalatraServlet with Akka2Support {
 
   get("/users") {
     contentType = jsonType
-    val users = freakoutsColl.map(u => {
+    val users = usersColl.map(u => {
       u.toString
     })
     """{"users":[""" + users.mkString(",") + "]}"
@@ -42,15 +43,22 @@ class FreakoutServlet extends ScalatraServlet with Akka2Support {
 
   put("/users/:name", acceptJson(request)) {
     contentType = jsonType
-    freakoutsColl.update(MongoDBObject("_id" -> params("name")), JSON.parse(request.body).asInstanceOf[DBObject], true, false)
-    ()
+    val userDbo = JSON.parse(request.body).asInstanceOf[DBObject]
+    userDbo.put("fo_count",0L: java.lang.Long)
+    val res = usersColl.update(MongoDBObject("_id" -> params("name")), userDbo , true, false)
+    if(res.getLastError().ok) {
+      halt(201, "user %s created" format params("name"))
+    } else {
+      halt(400, "could not create user %s" format params("name"))
+    }
+    userDbo
   }
 
   get("/users/:name") {
     contentType = jsonType
-    freakoutsColl.findOne(MongoDBObject("_id" -> params("name"))) match {
+    usersColl.findOne(MongoDBObject("_id" -> params("name"))) match {
       case Some(user) => user.toString()
-      case None => halt(404, "$s was not found" format params("name"))
+      case None => halt(404, "%s was not found" format params("name"))
     }
     ()
   }
@@ -75,8 +83,8 @@ class FreakoutServlet extends ScalatraServlet with Akka2Support {
   }
 
   def acceptJson(request: HttpServletRequest) = {
-    request.getHeader("Accept").contains(jsonType) ||
-      request.getHeader("Accept").contains("text/json")
+    request.getHeader("Content-Type").contains(jsonType) ||
+      request.getHeader("Content-Type").contains("text/json")
   }
 
   def assertParameter(request: HttpServletRequest, params: String*) = {

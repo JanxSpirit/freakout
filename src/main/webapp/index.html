@@ -50,25 +50,41 @@
     </div>
 
     <div class="container">
-    <div class="hero-unit">
-    <h1>Freakout</h1>
-    <p>Don't freak out today...</p>
-    <p>
-    <a class="btn btn-primary btn-large">
-    Add User
-    </a>
-    </p>
-    </div>
+      <div class="hero-unit">
+	<h1>Freakout</h1>
+	<p>Don't freak out today...</p>
+	<p>
+	  <a class="btn btn-primary btn-large" id="create_user_button">
+	    Add User
+	  </a>
+	</p>
+      </div>
 
       <div class="row">
 	<div class="span2 offset3">
 	  <div class="freakout_users">
-	 
 	  </div>
 	</div>
       </div>
 
     </div> <!-- /container -->
+
+    <div class="modal hide fade" id="createUser">
+      <div class="modal-header">
+	<a class="close" data-dismiss="modal">×</a>
+	<h3>Add New Freakout User</h3>
+      </div>
+      <div class="modal-body">
+	<form id="add_user_form">
+	  <input id="add_user_form_id" type="text" name="_id" placeholder="username"/>
+	  <input id="add_user_form_fullname" type="text" name="fullname" placeholder="Pretty Name"/>
+	</form>
+      </div>
+      <div class="modal-footer">
+	<a href="#" class="user_close">Close</a>
+	<a href="#" class="user_save">Save changes</a>
+      </div>
+    </div>
 
     <!-- Le javascript
     ================================================== -->
@@ -88,13 +104,52 @@
     <script src="index_files/bootstrap-typeahead.js"></script>
 
       <script>
- $(document).ready(function(){
-   $.getJSON('users',function(data) {
-     $.each(data.users, function(i, user) {
-       $('.freakout_users').append(userDropDown(user))
-     });
-   });
- });
+$(document).ready(function() {
+
+  populateUserPulldowns()
+ 
+  //handle addUser
+  $('.user_save').click(function() {
+    var newUser = 
+      {
+        _id: $('#add_user_form_id').val(),
+        fullname: $('#add_user_form_fullname').val()
+      };
+    var url = "users/"+$("#add_user_form_id").val();
+    $.ajax(url, {
+      type: 'PUT',
+      contentType: "application/json",
+      data: JSON.stringify(newUser),
+      dataType: 'json',
+      statusCode: {
+        201: function(data) {
+          $("#createUser").modal("hide")
+          populateUserPulldowns()
+        }
+      }
+    });           
+  });
+
+  $("#create_user_button").click(function() {
+    clearUserEntryForm()
+    $("#createUser").modal("show")
+  });
+});
+
+  function populateUserPulldowns() {
+    $('.freakout_users').empty()
+    //populate users pulldown  
+    $.getJSON('users',function(data) {
+      $.each(data.users, function(i, user) {
+        $('.freakout_users').append(userDropDown(user))
+      });
+    });
+  }
+
+  function clearUserEntryForm() {
+    $("#add_user_form_id").val(""),
+    $("#add_user_form_fullname").val("")
+  }
 
  function userDropDown(user) {
 
@@ -111,7 +166,7 @@
                   201: function(data) {
                     alert(user.fullname + ' freaked out')
                     alert('#fo_count_'+data._id)
-                    $('#fo_count_'+data._id).text(data.fc_total)
+                    $('#fo_count_'+data._id).text(data.fo_count)
                   }
                 }
               })
@@ -137,7 +192,7 @@
 
    var freakoutCount = $('<span></span>')
             .addClass('badge badge-error badge-large')
-            .text(user.fc_total)
+            .text(user.fo_count)
             .attr('id','fo_count_'+user._id);
 
    var btnGroup = $('<div></di>')
