@@ -71,7 +71,12 @@ class FreakoutServlet extends ScalatraServlet with Akka2Support {
     usersColl.findAndModify(idq,
       ($inc("fo_count" -> 1L) ++
         $set("last" -> now))) match {
-        case Some(user) => logFreakout(params("name"), now)
+        case Some(user) => {
+	  logFreakout(params("name"), now)
+	  val fc = user.getAs[Long]("fo_count").getOrElse(0L) + 1L
+	  user.put("fo_count", fc)
+	  halt(201, user.toString)
+	}
         case _ => {
           usersColl.findOne(MongoDBObject("_id" -> params("name"))) match {
             case Some(user) => {
@@ -82,12 +87,14 @@ class FreakoutServlet extends ScalatraServlet with Akka2Support {
 					  ($inc("fo_count" -> 1L) ++
 					   $set("last" -> now)))
                   logFreakout(params("name"), now)
+		  user.put("fo_count", 1)
+		  halt(201, user.toString)
 		} 
-		case _ => halt(400, "%s has freaked out in the past %s millis"
+		case _ => halt(409, "%s has freaked out in the past %s millis"
 		   .format(params("name"), cooloffInMillis))
               }
             }
-            case _ => halt(400, "Who is %s and why are they freaking out???"
+            case _ => halt(404, "Who is %s and why are they freaking out???"
               .format(params("name")))
           }
         }

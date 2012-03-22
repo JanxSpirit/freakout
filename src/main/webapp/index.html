@@ -164,9 +164,13 @@ $(document).ready(function() {
                 type: 'POST',
                 statusCode: {
                   201: function(data) {
-                    alert(user.fullname + ' freaked out')
-                    alert('#fo_count_'+data._id)
                     $('#fo_count_'+data._id).text(data.fo_count)
+                  },
+                  404: function(data) {
+                    alert("Who is that??")
+                  },
+                  409: function(data) {
+                    alert(user._id+" freaked out recently...take a deep breath")
                   }
                 }
               })
