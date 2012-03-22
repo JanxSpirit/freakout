@@ -2,3 +2,6 @@ libraryDependencies <+= sbtVersion(v => "com.github.siasia" %% "xsbt-web-plugin"
 
 addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.7.2")
 
+resolvers += Classpaths.typesafeResolver
+
+addSbtPlugin("com.typesafe.startscript" % "xsbt-start-script-plugin" % "0.5.0")

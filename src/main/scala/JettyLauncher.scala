@@ -1,20 +1,22 @@
 import org.eclipse.jetty.server.Server
-import org.eclipse.jetty.servlet.{ServletContextHandler, ServletHolder}
+import org.eclipse.jetty.servlet.{DefaultServlet, ServletContextHandler}
+import org.eclipse.jetty.webapp.WebAppContext
 
 object JettyLauncher {
-   def main(args: Array[String]) {
-     val port = try {
-       args(0).toInt
-     } catch {
-       case _ => 8080
-     }
-     println("Starting on port %s...".format(port))
-     val server = new Server(port)
-     val context = new ServletContextHandler(ServletContextHandler.SESSIONS)
-     context.setContextPath("/")
-     server.setHandler(context)     
-     context.addServlet(new ServletHolder(new FreakoutServlet), "/*")
-     server.start()
-     server.join()
-   }
+  def main(args: Array[String]) {
+    val port = if(System.getenv("PORT") != null) System.getenv("PORT").toInt else 8080
+
+    val server = new Server(port)
+    val context = new WebAppContext()
+    context setContextPath "/"
+    context.setResourceBase("src/main/webapp")
+    context.addServlet(classOf[FreakoutServlet], "/*")
+    context.addServlet(classOf[DefaultServlet], "/")
+
+    server.setHandler(context)
+
+    server.start
+    server.join
+  }
+
 }
