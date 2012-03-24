@@ -6,6 +6,7 @@ import com.mongodb.casbah.Imports._
 import com.mongodb.util.JSON
 import java.util.concurrent.Executors
 import javax.servlet.http.HttpServletRequest
+import FreakoutFields._
 
 class FreakoutServlet extends ScalatraServlet with Akka2Support {
 
@@ -21,6 +22,7 @@ class FreakoutServlet extends ScalatraServlet with Akka2Support {
   //setup Casbah connection
   val usersColl = MongoConnection("localhost", 27017)("freakout")("users")
   val freakoutsColl = MongoConnection("localhost", 27017)("freakout")("freakouts")
+  val dodgesColl = MongoConnection("localhost", 27017)("freakout")("dodges")
 
   get("/test") {
     <h1>Test resource</h1>
@@ -44,7 +46,8 @@ class FreakoutServlet extends ScalatraServlet with Akka2Support {
   put("/users/:name", acceptJson(request)) {
     contentType = jsonType
     val userDbo = JSON.parse(request.body).asInstanceOf[DBObject]
-    userDbo.put("fo_count", 0L: java.lang.Long)
+    userDbo.put(FO_COUNT, 0L: java.lang.Long)
+    userDbo.put(D_COUNT, 0L: java.lang.Long)
     val res = usersColl.update(MongoDBObject("_id" -> params("name")), userDbo, true, false)
     if (res.getLastError().ok) {
       halt(201, "user %s created" format params("name"))
@@ -66,17 +69,12 @@ class FreakoutServlet extends ScalatraServlet with Akka2Support {
   post("/freakouts/:name") {
     contentType = jsonType
     val now = System.currentTimeMillis
-    val idq = ("last" $lt (now - cooloffInMillis)) ++
+    val idq = ("last_fo" $lt (now - cooloffInMillis)) ++
       ("_id" -> params("name"))
     usersColl.findAndModify(idq,
       ($inc("fo_count" -> 1L) ++
-        $set("last" -> now))) match {
-        case Some(user) => {
-	  logFreakout(params("name"), now)
-	  val fc = user.getAs[Long]("fo_count").getOrElse(0L) + 1L
-	  user.put("fo_count", fc)
-	  halt(201, user.toString)
-	}
+        $set("last_fo" -> now))) match {
+        case Some(user) => logFreakout(user, now)
         case _ => {
           usersColl.findOne(MongoDBObject("_id" -> params("name"))) match {
             case Some(user) => {
@@ -86,9 +84,7 @@ class FreakoutServlet extends ScalatraServlet with Akka2Support {
                   usersColl.findAndModify(MongoDBObject("_id" -> params("name")),
 					  ($inc("fo_count" -> 1L) ++
 					   $set("last" -> now)))
-                  logFreakout(params("name"), now)
-		  user.put("fo_count", 1)
-		  halt(201, user.toString)
+                  logFreakout(user, now)
 		} 
 		case _ => halt(409, "%s has freaked out in the past %s millis"
 		   .format(params("name"), cooloffInMillis))
@@ -100,6 +96,42 @@ class FreakoutServlet extends ScalatraServlet with Akka2Support {
         }
       }
   }
+
+  post("/dodges/:name") {
+    contentType = jsonType
+    val now = System.currentTimeMillis
+    val idq = (D_LAST $lt (now - cooloffInMillis)) ++
+      ("_id" -> params("name"))
+    usersColl.findAndModify(idq,
+      ($inc(D_COUNT -> 1L) ++
+        $set(D_LAST -> now))) match {
+        case Some(user) => logDodge(user, now)
+        case _ => {
+          usersColl.findOne(MongoDBObject("_id" -> params("name"))) match {
+            case Some(user) => {
+              user.getAs[Long](D_COUNT) match {
+                case Some(0L) => {
+		  //user has never dodged so this is legit
+                  usersColl.findAndModify(MongoDBObject("_id" -> params("name")),
+					  ($inc(D_COUNT -> 1L) ++
+					   $set(D_LAST -> now)))
+                  logDodge(user, now)
+		} 
+		case _ => halt(409, "%s has dodged in the past %s millis"
+		   .format(params("name"), cooloffInMillis))
+              }
+            }
+            case _ => halt(404, "Who is %s and what are they dodging???"
+              .format(params("name")))
+          }
+        }
+      }
+  }
+
+
+  /**
+   *   
+   */
 
   def acceptJson(request: HttpServletRequest) = {
     request.getHeader("Content-Type").contains(jsonType) ||
@@ -115,17 +147,37 @@ class FreakoutServlet extends ScalatraServlet with Akka2Support {
     })
   }
 
-  def logFreakout(name: String, now: Long) =
+  def logFreakout(user: DBObject, now: Long) = {
     freakoutsColl.insert(MongoDBObject(
-      "u" -> name,
+      "u" -> user.getAs[String]("_id"),
       "d" -> now))
+    val c = user.getAs[Long](FO_COUNT).getOrElse(0L) + 1L
+    user.put(FO_COUNT, c)
+    halt(201, user.toString)
+  }
+
+  def logDodge(user: DBObject, now: Long) = {
+    dodgesColl.insert(MongoDBObject(
+      "u" -> user.getAs[String]("_id"),
+      "d" -> now))
+    val c = user.getAs[Long](D_COUNT).getOrElse(0L) + 1L
+    user.put(D_COUNT, c)
+    halt(201, user.toString)
+  }
 
   override def destroy = {
     ec.shutdown
   }
-
 }
 
 case class Freakout(d: Long)
 
 case class User(_id: String, fullname: String, fc_total: Long, freakouts: List[Freakout])
+
+object FreakoutFields {
+  val FO_COUNT = "fo_count"
+  val D_COUNT = "d_count"
+  val FO_LAST = "fo_last"
+  val D_LAST = "d_last"
+  
+}

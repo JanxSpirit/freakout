@@ -60,9 +60,9 @@
 	</p>
       </div>
 
-      <div class="row">
-	<div class="span2 offset3">
-	  <div class="freakout_users">
+      <div>
+	<div class="btn-group">
+	  <div id="freakout_users">
 	  </div>
 	</div>
       </div>
@@ -79,6 +79,21 @@
 	  <input id="add_user_form_id" type="text" name="_id" placeholder="username"/>
 	  <input id="add_user_form_fullname" type="text" name="fullname" placeholder="Pretty Name"/>
 	</form>
+      </div>
+      <div class="modal-footer">
+	<a href="#" class="user_close">Close</a>
+	<a href="#" class="user_save">Save changes</a>
+      </div>
+    </div>
+
+    <div class="modal hide fade" id="userStats">
+      <div class="modal-header">
+	<a class="close" data-dismiss="modal">×</a>
+	<h3></h3>
+      </div>
+      <div class="modal-body">
+	Daddy's last freakout was 5 minutes ago.
+	His last dodge was yesterday.
       </div>
       <div class="modal-footer">
 	<a href="#" class="user_close">Close</a>
@@ -137,11 +152,11 @@ $(document).ready(function() {
 });
 
   function populateUserPulldowns() {
-    $('.freakout_users').empty()
+    $("#freakout_users").empty()
     //populate users pulldown  
     $.getJSON('users',function(data) {
       $.each(data.users, function(i, user) {
-        $('.freakout_users').append(userDropDown(user))
+        $("#freakout_users").append(userDropDown(user))
       });
     });
   }
@@ -178,11 +193,31 @@ $(document).ready(function() {
 
    var dodgeLi = $('<li></li>')
             .addClass('btn btn-primary btn-large')
-            .text('Dodged a Freakout');
+            .text('Dodged a Freakout')
+            .click(function() {
+              $.ajax('dodges/'+user._id, {
+                type: 'POST',
+                statusCode: {
+                  201: function(data) {
+                    $('#d_count_'+data._id).text(data.d_count)
+                  },
+                  404: function(data) {
+                    alert("Who is that??")
+                  },
+                  409: function(data) {
+                    alert(user._id+" dodged recently...keep it up!")
+                  }
+                }
+              })
+            });
 
    var mainButton = $('<button></button>')
             .addClass('btn btn-primary btn-large')
-            .text(user.fullname);
+            .text(user.fullname)
+            .attr("id","show stats_"+user._id)
+            .click(function() {
+              $("#userStats").modal("show")              
+            });
 
    var dropButton = $('<button></button>')
             .addClass('btn dropdown-toggle btn-primary btn-large')
@@ -199,12 +234,18 @@ $(document).ready(function() {
             .text(user.fo_count)
             .attr('id','fo_count_'+user._id);
 
+   var dodgeCount = $('<span></span>')
+            .addClass('badge badge-error badge-large')
+            .text(user.d_count)
+            .attr('id','d_count_'+user._id);
+
    var btnGroup = $('<div></di>')
             .addClass('btn-group')
             .append(mainButton)
             .append(dropButton)
             .append(menu)
-            .append(freakoutCount);
+            .append(freakoutCount)
+            .append(dodgeCount);
 
   return btnGroup;
 

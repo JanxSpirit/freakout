@@ -18,5 +18,4 @@ object JettyLauncher {
     server.start
     server.join
   }
-
 }
