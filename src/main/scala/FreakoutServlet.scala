@@ -97,6 +97,17 @@ class FreakoutServlet extends ScalatraServlet with Akka2Support {
       }
   }
 
+  get("/freakouts/mostRecent") {
+    contentType = jsonType
+    val fo_user = usersColl.find(MongoDBObject()).sort(MongoDBObject("last_fo" -> -1)).limit(1)
+    if (fo_user.size == 1) {
+      halt(200, fo_user.next().toString)
+    } else {
+      halt(404, "no one has ever freaked out")
+    }
+    ()
+  } 
+
   post("/dodges/:name") {
     contentType = jsonType
     val now = System.currentTimeMillis
