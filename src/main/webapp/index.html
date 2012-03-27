@@ -60,12 +60,14 @@
 	</p>
       </div>
 
-      <div>
+      <div 
+	<div id="most_recent_panel" class="label inverse-label"/> seconds since the last freakout.
+      </div>
+
 	<div class="btn-group">
 	  <div id="freakout_users">
 	  </div>
 	</div>
-      </div>
 
     </div> <!-- /container -->
 
@@ -122,6 +124,10 @@
 $(document).ready(function() {
 
   populateUserPulldowns()
+
+  $.ajax("freakouts/mostRecent", {
+    
+  });
  
   //handle addUser
   $('.user_save').click(function() {

@@ -83,7 +83,7 @@ class FreakoutServlet extends ScalatraServlet with Akka2Support {
 		  //user has never freaked out so this is legit
                   usersColl.findAndModify(MongoDBObject("_id" -> params("name")),
 					  ($inc("fo_count" -> 1L) ++
-					   $set("last" -> now)))
+					   $set("last_fo" -> now)))
                   logFreakout(user, now)
 		} 
 		case _ => halt(409, "%s has freaked out in the past %s millis"
